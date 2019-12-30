@@ -23,13 +23,14 @@ class InfoBloc extends Bloc<InfoEvent, InfoState> {
         if (currentState is InfoUnInitState) {
           List<InfoModel> models = await getMovies(page);
           yield InfoLoadedState(models: models, hasReachedMax: false);
-        }else if (currentState is InfoLoadedState){
-          List<InfoModel> models = await getMovies(page++);
-
-          if (models == null || models.isEmpty){
+        }
+        if (currentState is InfoLoadedState){
+          page = page + 1;
+          List<InfoModel> models = await getMovies(page);
+          if (models.isEmpty){
             yield currentState.copyWith(hasReachedMax: true);
           }else{
-            yield InfoLoadedState(models: models,hasReachedMax: false);
+            yield InfoLoadedState(models: currentState.models + models,hasReachedMax: false);
           }
         }
       } catch (_) {
@@ -47,20 +48,19 @@ class InfoBloc extends Bloc<InfoEvent, InfoState> {
   }
 
   Future<List<InfoModel>> getMovies(int page) async {
-    print("请求");
+    print("请求page:"+page.toString());
     HttpClient httpClient = HttpClient();
     var param = {
       "type": "tv",
       "tag": "美剧",
       "sort": "recommend",
       "page_limit": "20",
-      "page_start": page.toString()
+      "page_start": (page * 20).toString()
     };
     var uri = new Uri.https('movie.douban.com', '/j/search_subjects', param);
     var request = await httpClient.getUrl(uri);
     var response = await request.close();
     var responseBody = await response.transform(utf8.decoder).join();
-    print(responseBody);
     List<InfoModel> models =
         InfoModel.getInfoModelsFromJson(jsonDecode(responseBody));
     return models;

@@ -32,20 +32,35 @@ class _BlocListPageState extends State<BlocListPage> {
           if (state is InfoLoadedState) {
             return EasyRefresh(
               child: ListView.builder(
-                  itemBuilder: (BuildContext context, int index) {
-                return CachedNetworkImage(imageUrl: state.models[index].cover);
-              }),
+                itemBuilder: (BuildContext context, int index) {
+                  return Container(
+                    child: CachedNetworkImage(
+                      imageUrl: state.models[index].cover,
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                },
+                itemCount: state.models == null ? 0 : state.models.length,
+              ),
               onRefresh: () async {
                 _infoBloc.add(RefreshEvent());
               },
               onLoad: () async {
                 _infoBloc.add(LoadMoreEvent());
               },
-              firstRefresh: true,
+              firstRefresh: false,
             );
           } else {
+            var text = "";
+            if (state is InfoLoadingState) {
+              text = "加载中";
+            } else if (state is InfoUnInitState) {
+              text = "初始化";
+            } else if (state is InfoErrorState) {
+              text = "错误";
+            }
             return Center(
-              child: Text("Unkown"),
+              child: Text(text),
             );
           }
         },
